@@ -6,8 +6,8 @@ export RAY_DEBUG=legacy
 model_path="${MODEL_PATH:-}"
 project_name="${PROJECT_NAME:-string-task}"
 experiment_name="${EXPERIMENT_NAME:-}"
-train_files="${TRAIN_FILES:-['data/string_task/stage2_level1/train.parquet']}"
-val_files="${VAL_FILES:-['data/string_task/stage2_level18/test.parquet']}"
+train_files="${TRAIN_FILES:-['data/string_task/stage2_level1/forward_train.parquet']}"
+val_files="${VAL_FILES:-['data/string_task/stage2_level18/forward_test.parquet']}"
 nnodes="${NNODES:-1}"
 save_dir="${SAVE_DIR:-checkpoints}"
 

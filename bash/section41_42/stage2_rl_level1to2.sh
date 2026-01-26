@@ -3,8 +3,8 @@ set -x
 export MODEL_PATH=checkpoints/string-task/stage1-rft
 export PROJECT_NAME=string-task
 export EXPERIMENT_NAME=stage2-rl-level1to2
-export TRAIN_FILES="['data/string_task/stage2_level1/train.parquet','data/string_task/stage2_level2/train.parquet']"
-export VAL_FILES="['data/string_task/stage2_level1to8/test.parquet']"
+export TRAIN_FILES="['data/string_task/stage2_level1/forward_train.parquet','data/string_task/stage2_level2/forward_train.parquet']"
+export VAL_FILES="['data/string_task/stage2_level1to8/forward_test.parquet']"
 export NNODES=1
 export SAVE_DIR=checkpoints/${PROJECT_NAME}/${EXPERIMENT_NAME}
 
