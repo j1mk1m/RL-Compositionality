@@ -22,7 +22,7 @@ else
     STANDALONE="--master_addr=${MLP_WORKER_0_HOST} --master_port=${MLP_WORKER_0_PORT} --node_rank=${MLP_ROLE_INDEX}"
 fi
 
-torchrun ${STANDALONE} --nnodes=${nnodes} --nproc_per_node=8 \
+torchrun ${STANDALONE} --nnodes=${nnodes} --nproc_per_node=4 \
      -m verl.trainer.fsdp_sft_trainer \
     data.train_files=${train_files} \
     data.val_files=${val_files} \
@@ -37,7 +37,7 @@ torchrun ${STANDALONE} --nnodes=${nnodes} --nproc_per_node=8 \
     trainer.default_hdfs_dir=${save_dir} \
     trainer.project_name=${project_name} \
     trainer.experiment_name=${experiment_name} \
-    trainer.logger=['console'] \
+    trainer.logger=['console','wandb'] \
     trainer.total_epochs=${epochs} \
     ulysses_sequence_parallel_size=${sp_size} \
     use_remove_padding=true

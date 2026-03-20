@@ -79,6 +79,10 @@ class FSDPSFTTrainer(object):
 
     def __init__(self, config, device_mesh: DeviceMesh, ulysses_device_mesh: DeviceMesh):
         self.config = config
+        # TODO: fix this later; manually set epochs to 4
+        self.config.trainer.total_epochs = 4
+        # Fix above
+
         self.device_mesh = device_mesh
         self.ulysses_device_mesh = ulysses_device_mesh
         self.sharding_manager = FSDPUlyssesShardingManager(self.ulysses_device_mesh)
@@ -474,6 +478,11 @@ class FSDPSFTTrainer(object):
                 metric = self.training_step(data)
                 if rank == 0:
                     tracking.log(data=metric, step=global_step)
+
+                # save checkpoint at every save_steps interval
+                save_steps = self.config.trainer.get('save_steps', None)
+                if save_steps is not None and global_step % save_steps == 0:
+                    self.save_checkpoint(step=global_step)
 
                 # for early exit validation
                 if global_step >= self.total_training_steps:

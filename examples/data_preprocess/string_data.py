@@ -6,6 +6,7 @@ import string
 import csv
 import inspect
 from math import gcd
+import itertools
 from itertools import chain
 
 FORWARD_PROMPT = "You are given a code:\n\n{code}\n\nCan you predict the output of `main_solution(\"{input}\")` without writing any code? Please reason and put your final answer in the following json format: {{\"output\": <your output>}}, where <your output> should be the final string."
@@ -470,6 +471,68 @@ def generate_random_string_function(max_depth=3):
     return expr, func, feasible_input
 
 
+def wrap_expr_with_func(fname, inner_expr):
+    """
+    Wrap `inner_expr` with a single call to `fname`, resolving any extra
+    parameters randomly (same ranges as random_expr).
+    Binary functions use `inner_expr` for both arguments.
+    """
+    no_param_custom = [
+        "deterministic_shuffle", "remove_vowels", "sort_chars", "reverse_words", "mirror_str", "alternate_case",
+        "vowel_to_number", "duplicate_every_char", "fancy_brackets", "compress_repeats", "recursive_reverse",
+        "loop_filter_nonalpha", "verify_even_length",
+    ]
+    if fname in no_param_custom:
+        return f"{fname}({inner_expr})"
+    if fname == "repeat_str":
+        n = random.randint(2, 4)
+        return f"repeat_str({inner_expr}, {n})"
+    if fname == "add_prefix":
+        pre = ''.join(random.choices(string.ascii_lowercase, k=random.randint(2, 4)))
+        return f"add_prefix({inner_expr}, '{pre}')"
+    if fname == "add_suffix":
+        suf = ''.join(random.choices(string.ascii_lowercase, k=random.randint(2, 4)))
+        return f"add_suffix({inner_expr}, '{suf}')"
+    if fname == "rotate_str":
+        n = random.randint(1, 3)
+        return f"rotate_str({inner_expr}, {n})"
+    if fname == "shift_chars":
+        shift_val = random.randint(1, 5)
+        return f"shift_chars({inner_expr}, {shift_val})"
+    if fname == "insert_separator":
+        sep = random.choice(['-', '_', '|'])
+        return f"insert_separator({inner_expr}, '{sep}')"
+    if fname == "while_rotate":
+        n = random.randint(1, 3)
+        return f"while_rotate({inner_expr}, {n})"
+    if fname == "loop_concat":
+        n = random.randint(2, 4)
+        return f"loop_concat({inner_expr}, {n})"
+    if fname == "backchain_add_digit":
+        d = random.randint(1, 3)
+        return f"backchain_add_digit({inner_expr}, {d})"
+    if fname == "backchain_palindrome":
+        d = random.randint(1, 3)
+        return f"backchain_palindrome({inner_expr}, {d})"
+    if fname == "interlace_str":
+        return f"interlace_str({inner_expr}, {inner_expr})"
+    if fname == "recursive_interlace":
+        return f"recursive_interlace({inner_expr}, {inner_expr})"
+    raise ValueError(f"Unknown function: {fname}")
+
+
+def generate_expr_for_combo(func_chain):
+    """
+    Build an expression for an ordered tuple of function names `func_chain`,
+    composing them from innermost to outermost around 'x'.
+    e.g. ('sort_chars', 'mirror_str') → 'mirror_str(sort_chars(x))'
+    """
+    expr = "x"
+    for fname in reversed(func_chain):
+        expr = wrap_expr_with_func(fname, expr)
+    return expr
+
+
 if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument('--save_path', required=True)
@@ -478,6 +541,9 @@ if __name__ == "__main__":
     parser.add_argument('--min_level', type=int, default=1)
     parser.add_argument('--max_level', type=int, default=1)
     parser.add_argument('--data_num', type=int, default=50000)
+    parser.add_argument('--balanced', action='store_true',
+                        help='Generate an equal number of samples per function combination. '
+                             'At depth=1 iterates over each function; at depth=2 over all ordered pairs; etc.')
     args = parser.parse_args()
 
     if args.stage == 1:
@@ -499,54 +565,116 @@ if __name__ == "__main__":
     for depth in depths:
         count = 0
         print(f"Generating data for depth {depth} ...")
-        while count < num_per_depth:
-            try:
-                expr, func, feasible_input = generate_random_string_function(max_depth=depth)
-            except Exception as e:
-                continue  # Skip if an error occurs during generation.
-            if feasible_input is None:
-                continue  # Skip if no feasible input was found.
-            try:
-                output = func(feasible_input)
-            except Exception:
-                continue  # If evaluation fails, skip this sample.
 
-            if expr in generated:
-                continue
-            generated.add(expr)
+        if args.balanced:
+            # Balanced mode: enumerate all ordered depth-tuples of functions and
+            # generate an equal quota of samples for each combination.
+            func_names = list(custom_functions.keys())
+            num_funcs = len(func_names)
+            combos = list(itertools.product(func_names, repeat=depth))
+            num_combos = len(combos)
+            assert num_per_depth % num_combos == 0, (
+                f"--data_num / num_depths ({num_per_depth}) must be divisible by the number of "
+                f"combinations ({num_combos} = {num_funcs}^{depth}) when using --balanced."
+            )
+            quota_per_combo = num_per_depth // num_combos
+            print(f"  Balanced mode: {num_combos} combinations × {quota_per_combo} samples each = {num_per_depth} total.")
 
-            # Create the full executable code that contains all function definitions and the lambda.
-            full_code = generate_full_code(expr)
-            sample = {
-                "data_source": f"codeio-forward-incomplete-depth{depth}",
-                "prompt": [{
-                    "role": "user",
-                    "content": FORWARD_PROMPT.format(code=full_code, input=feasible_input)
-                }],
-                "ability": "reasoning",
-                "reward_model": {
-                    "style":
-                        "rule",
-                    "ground_truth":
-                        json.dumps({
-                            "ref_input": {
-                                "x": feasible_input
-                            },
-                            "ref_output": output,
-                            "ref_code": full_code,
-                            "funcname": "main_solution",
-                        })
-                },
-                "extra_info": {
-                    "index": 0,
-                    "split": "dummy",
-                    "depth": depth
+            for combo in combos:
+                combo_count = 0
+                combo_label = ' → '.join(combo)
+                print(f"  Generating {quota_per_combo} samples for [{combo_label}] ...")
+                while combo_count < quota_per_combo:
+                    try:
+                        expr = generate_expr_for_combo(combo)
+                        func_str = f"lambda x: {expr}"
+                        func = eval(func_str, custom_functions)
+                    except Exception:
+                        continue
+
+                    feasible_input = generate_feasible_input(func)
+                    if feasible_input is None:
+                        continue
+                    try:
+                        output = func(feasible_input)
+                    except Exception:
+                        continue
+
+                    full_code = generate_full_code(expr)
+                    sample = {
+                        "data_source": f"codeio-forward-incomplete-depth{depth}",
+                        "prompt": [{
+                            "role": "user",
+                            "content": FORWARD_PROMPT.format(code=full_code, input=feasible_input)
+                        }],
+                        "ability": "reasoning",
+                        "reward_model": {
+                            "style": "rule",
+                            "ground_truth": json.dumps({
+                                "ref_input": {"x": feasible_input},
+                                "ref_output": output,
+                                "ref_code": full_code,
+                                "funcname": "main_solution",
+                            })
+                        },
+                        "extra_info": {
+                            "index": 0,
+                            "split": "dummy",
+                            "depth": depth
+                        }
+                    }
+                    data.append(sample)
+                    combo_count += 1
+                    count += 1
+        else:
+            while count < num_per_depth:
+                try:
+                    expr, func, feasible_input = generate_random_string_function(max_depth=depth)
+                except Exception as e:
+                    continue  # Skip if an error occurs during generation.
+                if feasible_input is None:
+                    continue  # Skip if no feasible input was found.
+                try:
+                    output = func(feasible_input)
+                except Exception:
+                    continue  # If evaluation fails, skip this sample.
+
+                if expr in generated:
+                    continue
+                generated.add(expr)
+
+                # Create the full executable code that contains all function definitions and the lambda.
+                full_code = generate_full_code(expr)
+                sample = {
+                    "data_source": f"codeio-forward-incomplete-depth{depth}",
+                    "prompt": [{
+                        "role": "user",
+                        "content": FORWARD_PROMPT.format(code=full_code, input=feasible_input)
+                    }],
+                    "ability": "reasoning",
+                    "reward_model": {
+                        "style":
+                            "rule",
+                        "ground_truth":
+                            json.dumps({
+                                "ref_input": {
+                                    "x": feasible_input
+                                },
+                                "ref_output": output,
+                                "ref_code": full_code,
+                                "funcname": "main_solution",
+                            })
+                    },
+                    "extra_info": {
+                        "index": 0,
+                        "split": "dummy",
+                        "depth": depth
+                    }
                 }
-            }
-            data.append(sample)
-            count += 1
-            if count % 1000 == 0:
-                print(f"  Depth {depth}: Generated {count} samples.")
+                data.append(sample)
+                count += 1
+                if count % 1000 == 0:
+                    print(f"  Depth {depth}: Generated {count} samples.")
 
     dataset = Dataset.from_list(data)
     dataset.to_parquet(f"{args.save_path}")

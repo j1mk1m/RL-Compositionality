@@ -8,15 +8,17 @@ TEMPERATURE=${TEMPERATURE:-"0"}
 PROMPT_LENGTH=${PROMPT_LENGTH:-"1024"}
 RESPONSE_LENGTH=${RESPONSE_LENGTH:-"8192"}
 NNODES=${NNODES:-"1"}
+BATCH_SIZE=${BATCH_SIZE:-"1024"}
+NGPUS=${NGPUS:-"4"}
 
 python3 -m verl.trainer.main_generation \
     trainer.nnodes=${NNODES} \
-    trainer.n_gpus_per_node=8 \
+    trainer.n_gpus_per_node=$NGPUS \
     data.path=$DATA_PATH \
     data.prompt_key=prompt \
     data.n_samples=$N_SAMPLES \
     data.output_path=$SAVE_PATH \
-    data.batch_size=100000000 \
+    data.batch_size=$BATCH_SIZE \
     model.path=$MODEL_PATH \
     +model.trust_remote_code=True \
     rollout.name=vllm \
@@ -25,5 +27,5 @@ python3 -m verl.trainer.main_generation \
     rollout.top_p=1.0 \
     rollout.prompt_length=$PROMPT_LENGTH \
     rollout.response_length=$RESPONSE_LENGTH \
-    rollout.tensor_model_parallel_size=1 \
+    rollout.tensor_model_parallel_size=$NGPUS \
     rollout.gpu_memory_utilization=0.8

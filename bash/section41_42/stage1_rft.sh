@@ -1,6 +1,6 @@
 export PROJECT_NAME=string-task
 export EXPERIMENT_NAME=stage1-rft
-export MODEL_PATH=/fs-computility/prime/shared/chenweize/models/meta-llama/Llama-3.1-8B-Instruct-plain-prompt
+export MODEL_PATH=meta-llama/Meta-Llama-3.1-8B-Instruct
 export NNODES=1
 export SP_SIZE=1
 export MAX_LENGTH=3072
@@ -8,6 +8,6 @@ export TRAIN_FILES=data/string_task/stage1_level1/rft_data/train.parquet
 export VAL_FILES=data/string_task/stage1_level1/rft_data/test.parquet 
 export BATCH_SIZE=128
 export EPOCHS=2
-export SAVE_DIR=checkpoints/${PROJECT_NAME}/${EXPERIMENT_NAME}
+export SAVE_DIR=/data/user_data/gyeongwk/checkpoints/${PROJECT_NAME}/${EXPERIMENT_NAME}
 
 bash examples/sft/template.sh

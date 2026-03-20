@@ -6,6 +6,7 @@ import os
 from collections import defaultdict
 from transformers import AutoTokenizer
 from collections import Counter
+import random
 
 
 parser = ArgumentParser()
@@ -18,6 +19,7 @@ parser.add_argument('--max_length', type=int, default=None)
 parser.add_argument('--tokenizer', type=str, default=None)
 parser.add_argument('--no_remove_context', action='store_true')
 parser.add_argument('--remove_overlong', action='store_true')
+parser.add_argument('--n_samples', type=int, default=-1)
 args = parser.parse_args()
 
 if args.max_length:
@@ -62,7 +64,10 @@ for gen_path in all_gen_path:
     # dataset = dataset.filter(lambda x: len(x['responses']) > 0)
 
     for data, raw_data in zip(dataset, raw_dataset):
-        for response in data['responses']:
+        responses = data['responses']
+        if args.n_samples > 0 and len(responses) > args.n_samples:
+            responses = random.sample(responses, k=args.n_samples)
+        for response in responses:
             if args.remove_overlong:
                 if not response.strip().endswith('<|eot_id|>'):
                     continue

@@ -21,6 +21,7 @@ import numpy as np
 import hydra
 import os
 import json
+from tqdm import tqdm
 from tabulate import tabulate
 from datasets import load_dataset
 
@@ -99,7 +100,7 @@ def main_task(config):
         num_batch = -(-total_samples // config_batch_size)
         output_lst = [[] for _ in range(config.data.n_samples)]
 
-        for batch_idx in range(num_batch):
+        for batch_idx in tqdm(range(num_batch)):
             print(f"[{batch_idx + 1}/{num_batch}] Start to process.")
             batch_chat_lst = chat_lst[batch_idx * config_batch_size : (batch_idx + 1) * config_batch_size]
             if config.data.zero:

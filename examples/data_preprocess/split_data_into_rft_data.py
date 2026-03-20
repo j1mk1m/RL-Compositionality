@@ -4,7 +4,7 @@ import os
 
 def main(args):
     dataset = load_dataset('parquet', data_files=args.data_path)['train']
-    dataset = dataset.shuffle(42)
+    # dataset = dataset.shuffle(42)
 
     for iter_id in range(args.num_iter):
         start_idx = iter_id * args.example_per_iter

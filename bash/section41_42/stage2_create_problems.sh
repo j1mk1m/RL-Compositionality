@@ -1,5 +1,5 @@
 python3 examples/data_preprocess/string_data.py \
-    --save_path data/string_task/stage2_level1to2/train.parquet \
+    --save_path data/string_task_tmp/stage2_level1to2/train.parquet \
     --stage 2 \
     --split train \
     --min_level 1 \
@@ -7,7 +7,7 @@ python3 examples/data_preprocess/string_data.py \
     --data_num 50000
 
 python3 examples/data_preprocess/string_data.py \
-    --save_path data/string_task/stage2_level1/train.parquet \
+    --save_path data/string_task_tmp/stage2_level1/train.parquet \
     --stage 2 \
     --split train \
     --min_level 1 \
@@ -15,7 +15,7 @@ python3 examples/data_preprocess/string_data.py \
     --data_num 50000
 
 python3 examples/data_preprocess/string_data.py \
-    --save_path data/string_task/stage2_level2/train.parquet \
+    --save_path data/string_task_tmp/stage2_level2/train.parquet \
     --stage 2 \
     --split train \
     --min_level 2 \
@@ -23,7 +23,7 @@ python3 examples/data_preprocess/string_data.py \
     --data_num 50000
 
 python3 examples/data_preprocess/string_data.py \
-    --save_path data/string_task/stage2_level1to8/test.parquet \
+    --save_path data/string_task_tmp/stage2_level1to8/test.parquet \
     --stage 2 \
     --split test \
     --min_level 1 \

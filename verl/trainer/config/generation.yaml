@@ -36,7 +36,7 @@ rollout:
   max_model_len: null
   max_num_seqs: 1024
   log_prob_micro_batch_size: null # will be deprecated, use log_prob_micro_batch_size_per_gpu
-  log_prob_micro_batch_size_per_gpu: 8
+  log_prob_micro_batch_size_per_gpu: 1
   # for fire vllm rollout
   use_fire_sampling: False # enable FIRE https://arxiv.org/abs/2410.21236
   # for hf rollout
