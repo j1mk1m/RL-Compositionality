@@ -134,7 +134,7 @@ if __name__ == '__main__':
 
     print('Writing to local disk')
     hf_path = os.path.join(local_dir, 'huggingface')
-    config = AutoConfig.from_pretrained(hf_path)
+    config = AutoConfig.from_pretrained(local_dir)
 
     if 'ForTokenClassification' in config.architectures[0]:
         auto_model = AutoModelForTokenClassification

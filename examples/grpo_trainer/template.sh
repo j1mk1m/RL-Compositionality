@@ -17,10 +17,10 @@ response_length=8192
 mbsz=16
 n=16
 
-enable_filter_groups=True
-filter_groups_metric=seq_reward
-max_num_gen_batches=10
-gen_prompt_bsz=$((bsz * 2))
+#enable_filter_groups=True
+#filter_groups_metric=seq_reward
+#max_num_gen_batches=10
+#gen_prompt_bsz=$((bsz * 2))
 
 python3 -m verl.trainer.main_ppo \
     algorithm.adv_estimator=grpo \
@@ -29,7 +29,6 @@ python3 -m verl.trainer.main_ppo \
     data.train_batch_size=$bsz \
     data.max_prompt_length=$prompt_length \
     data.max_response_length=$response_length \
-    data.gen_batch_size=${gen_prompt_bsz} \
     data.filter_overlong_prompts=True \
     data.truncation='error' \
     actor_rollout_ref.model.path=${model_path} \
@@ -42,6 +41,7 @@ python3 -m verl.trainer.main_ppo \
     actor_rollout_ref.model.use_remove_padding=True \
     actor_rollout_ref.actor.ppo_mini_batch_size=$mbsz \
     actor_rollout_ref.actor.ppo_micro_batch_size_per_gpu=1 \
+    actor_rollout_ref.actor.entropy_coeff=0 \
     actor_rollout_ref.actor.use_kl_loss=False \
     actor_rollout_ref.actor.kl_loss_coef=0 \
     actor_rollout_ref.actor.kl_loss_type=low_var_kl \
@@ -63,9 +63,6 @@ python3 -m verl.trainer.main_ppo \
     actor_rollout_ref.ref.log_prob_use_dynamic_bsz=True \
     actor_rollout_ref.ref.log_prob_max_token_len_per_gpu=34816 \
     algorithm.kl_ctrl.kl_coef=0 \
-    algorithm.filter_groups.enable=${enable_filter_groups} \
-    algorithm.filter_groups.max_num_gen_batches=${max_num_gen_batches} \
-    algorithm.filter_groups.metric=${filter_groups_metric} \
     reward_model.reward_manager="mp" \
     reward_model.penalize_overlong=True \
     trainer.critic_warmup=0 \
@@ -78,3 +75,10 @@ python3 -m verl.trainer.main_ppo \
     trainer.test_freq=25 \
     trainer.default_local_dir=${save_dir} \
     trainer.total_epochs=1 $@
+
+
+#    data.gen_batch_size=${gen_prompt_bsz} \
+#    algorithm.filter_groups.enable=${enable_filter_groups} \
+#    algorithm.filter_groups.max_num_gen_batches=${max_num_gen_batches} \
+#    algorithm.filter_groups.metric=${filter_groups_metric} \
+
